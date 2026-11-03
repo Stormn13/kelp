@@ -20,6 +20,8 @@ import {
   ListItemText,
   ListSubheader,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -38,6 +40,7 @@ import StopRoundedIcon from "@mui/icons-material/StopRounded";
 
 import { MessageBody } from "./Blocks";
 import { type Message, type Thread } from "./bridge";
+import ComputerPane from "./ComputerPane";
 import { useChat } from "./useChat";
 
 const DRAWER_WIDTH = 280;
@@ -80,6 +83,7 @@ export default function App() {
   const [draft, setDraft] = useState("");
   const [bearer, setBearer] = useState("");
   const [askSignIn, setAskSignIn] = useState(false);
+  const [tab, setTab] = useState<"chat" | "computer">("chat");
 
   const groups = useMemo(() => groupByDay(chat.threads), [chat.threads]);
 
@@ -191,26 +195,48 @@ export default function App() {
           direction="row"
           alignItems="center"
           spacing={1}
-          sx={{ px: 3, py: 1.5, borderBottom: "1px solid rgba(25,24,23,0.08)" }}
+          sx={{ px: 3, py: 1, borderBottom: "1px solid rgba(25,24,23,0.08)" }}
         >
-          <Typography variant="subtitle1" noWrap sx={{ flex: 1, fontWeight: 600 }}>
-            {chat.activeThread?.title ?? "New chat"}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {chat.streamState === "open" ? "live" : chat.streamState}
-          </Typography>
-          <Tooltip title="Search">
-            <IconButton size="small">
-              <SearchRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="More">
-            <IconButton size="small">
-              <MoreHorizRoundedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <Tabs
+            value={tab}
+            onChange={(_, value: "chat" | "computer") => setTab(value)}
+            sx={{ minHeight: 32, mr: 1 }}
+          >
+            <Tab value="chat" label="Chat" sx={{ minHeight: 32, py: 0, px: 1.5 }} />
+            <Tab value="computer" label="Computer" sx={{ minHeight: 32, py: 0, px: 1.5 }} />
+          </Tabs>
+          {tab === "chat" ? (
+            <Typography variant="subtitle1" noWrap sx={{ flex: 1, fontWeight: 600 }}>
+              {chat.activeThread?.title ?? "New chat"}
+            </Typography>
+          ) : (
+            <Box sx={{ flex: 1 }} />
+          )}
+          {tab === "chat" && (
+            <>
+              <Typography variant="caption" color="text.secondary">
+                {chat.streamState === "open" ? "live" : chat.streamState}
+              </Typography>
+              <Tooltip title="Search">
+                <IconButton size="small">
+                  <SearchRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="More">
+                <IconButton size="small">
+                  <MoreHorizRoundedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Stack>
 
+        {/* Tab switch. The chat surface below is untouched; the fragment keeps
+            this diff to the two markers rather than re-indenting 140 lines. */}
+        {tab === "computer" ? (
+          <ComputerPane />
+        ) : (
+          <>
         {chat.failure && (
           <Alert
             severity="error"
@@ -351,6 +377,8 @@ export default function App() {
             Connected to the Kelp server through the desktop bridge.
           </Typography>
         </Box>
+          </>
+        )}
       </Box>
 
       <Dialog open={chat.phase === "signed-out" || askSignIn} fullWidth maxWidth="xs">
